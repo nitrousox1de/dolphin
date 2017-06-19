@@ -5,6 +5,7 @@
 #pragma once
 
 #include <QEvent>
+#include <QTimer>
 #include <QWidget>
 
 class RenderWidget final : public QWidget
@@ -23,6 +24,10 @@ signals:
   void FocusChanged(bool focus);
   void StateChanged(bool fullscreen);
 
+private slots:
+  void UpdateCursor();
+
 private:
-  void OnHideCursorChanged();
+  static constexpr int MOUSE_HIDE_DELAY = 3000;
+  QTimer* m_mouse_timer;
 };

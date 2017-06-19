@@ -19,12 +19,16 @@ RenderWidget::RenderWidget(QWidget* parent) : QWidget(parent)
   connect(this, &RenderWidget::HandleChanged, Host::GetInstance(), &Host::SetRenderHandle);
   emit HandleChanged((void*)winId());
 
-  connect(&Settings::Instance(), &Settings::HideCursorChanged, this,
-          &RenderWidget::OnHideCursorChanged);
-  OnHideCursorChanged();
+  m_mouse_timer = new QTimer(this);
+  connect(m_mouse_timer, SIGNAL(timeout()), this, SLOT(UpdateCursor()));
+  m_mouse_timer->setSingleShot(true);
+  setMouseTracking(true);
+
+  connect(&Settings::Instance(), &Settings::HideCursorChanged, this, &RenderWidget::UpdateCursor);
+  UpdateCursor();
 }
 
-void RenderWidget::OnHideCursorChanged()
+void RenderWidget::UpdateCursor()
 {
   setCursor(Settings::Instance().GetHideCursor() ? Qt::BlankCursor : Qt::ArrowCursor);
 }
@@ -40,6 +44,14 @@ bool RenderWidget::event(QEvent* event)
       emit EscapePressed();
     break;
   }
+  case QEvent::MouseMove:
+  case QEvent::MouseButtonPress:
+    if (Settings::Instance().GetHideCursor())
+    {
+      setCursor(Qt::ArrowCursor);
+      m_mouse_timer->start(MOUSE_HIDE_DELAY);
+    }
+    break;
   case QEvent::WinIdChange:
     emit HandleChanged((void*)winId());
     break;
